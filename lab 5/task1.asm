@@ -1,0 +1,221 @@
+.MODEL SMALL
+.STACK 100H
+.DATA
+ NEWLINE DB 13,10,'$'
+ string1 db 'MADAM AND SIR$' 
+ array1  db  49,50,51,52,53,54,55,56
+.CODE
+MAIN PROC 
+
+      MOV AX , @DATA
+      MOV DS , AX
+
+; MOVING OFFSET OF STRING IN AX AND CALLING REVERSE FUNCTION 
+      MOV AX , OFFSET string1
+      CALL REVERSE_PRINT
+
+; DISPLAYING NEWLINE
+      MOV DX , OFFSET NEWLINE
+      MOV AH , 09h 
+      INT 21h
+
+; MOVING OFFSET OF ARRAY IN AX AND CALLLING MAXIMUM_ELEMENT FUNCTION
+      MOV AX , OFFSET array1
+      MOV CX , 8
+      CALL MAXIMUM_ELEMENT
+
+; DISPLAYING THE MAXIMUM ELEMENT RETURNED IN AX
+      MOV DL, AL          
+      MOV AH, 02h
+      INT 21h
+
+; DISPLAYING NEWLINE
+      MOV DX , OFFSET NEWLINE
+      MOV AH , 09h
+      INT 21h
+
+; MOVING OFFSET OF STRING IN AX AND CALLING CHK_PALINDROME FUNCTION
+      MOV  AX , OFFSET string1
+      CALL CHK_PALINDROME
+
+; DISPLAYING 0 OR 1 BASED ON EITHER PLAINDROME OR NOT
+      ADD AL, 30h 
+      MOV DL , AL 
+      MOV AH , 02h
+      INT 21h
+
+; DISPLAYING NEWLINE
+      MOV DX , OFFSET NEWLINE
+      MOV AH , 09h
+      INT 21h
+
+; CHECKINH NUMBER OF BITS IN AX 
+      MOV AX , 0007h;
+      CALL COUNT_1_BITS
+      
+      ADD AL, 30h 
+      MOV DL , AL 
+      MOV AH , 02h
+      INT 21h
+
+; DISPLAYING NEWLINE
+      MOV DX , OFFSET NEWLINE
+      MOV AH , 09h
+      INT 21h
+
+; COUNTING WORDS IN STRING 
+      MOV AX , OFFSET string1
+      CALL COUNT_WORDS
+
+; DISPLAYING NUMBER OF WORDS OF STRING
+      ADD AL, 30h 
+      MOV DL , AL 
+      MOV AH , 02h
+      INT 21h
+
+
+
+; EXITING PROGRAM
+      MOV AH , 4Ch
+      INT 21h
+MAIN ENDP
+      
+REVERSE_PRINT PROC
+ PUSH AX
+ MOV SI , AX
+ MOV BX , AX
+ AA: 
+    MOV AL , [SI]
+    CMP AL , '$'  
+    JE STRING_END
+    INC SI
+    JMP AA
+
+ STRING_END:
+    DEC SI 
+
+ PRINT_REV:
+    CMP SI, BX        
+    JB COMPLETED            
+    MOV DL, [SI]        
+    MOV AH, 02h
+    INT 21h
+    DEC SI
+    JMP PRINT_REV
+
+ COMPLETED:
+   POP AX
+    RET
+REVERSE_PRINT ENDP
+
+MAXIMUM_ELEMENT PROC
+         PUSH CX
+         MOV SI , AX
+         MOV BL , [SI]
+         INC SI 
+         DEC CX
+ CHK_MAX: 
+         CMP BL , [SI]
+         JAE NEXT
+         MOV BL , [SI]
+ NEXT:
+         INC SI 
+         DEC CX
+         JNZ CHK_MAX
+
+         MOV AH , 0
+         MOV AL  , BL
+         POP CX
+ RET
+MAXIMUM_ELEMENT ENDP
+
+CHK_PALINDROME PROC
+  PUSH SI 
+  PUSH DI
+  PUSH BX
+  MOV SI , AX
+ CHK_END:
+  MOV BL , [SI]
+  CMP BL , '$'
+  JE FOUND_END
+  INC SI
+  JMP CHK_END 
+ FOUND_END:
+  DEC SI 
+  MOV DI , SI 
+  MOV SI , AX
+ IS_PAL:
+  CMP SI , DI
+  JAE PAL 
+  MOV AL , [SI]
+  MOV BL , [DI]
+  CMP AL , BL
+  JNE NOT_PAL
+  INC SI
+  DEC DI
+  JMP IS_PAL
+ PAL:
+  MOV AX , 1
+  JMP FINISH
+ NOT_PAL:
+  MOV AX , 0
+ FINISH:
+  POP BX
+  POP DI
+  POP SI
+  RET
+CHK_PALINDROME ENDP
+
+COUNT_1_BITS PROC
+  PUSH BX
+  PUSH CX
+  MOV  CX , 16
+  MOV BX , AX
+  MOV AX , 0
+ AGAIN:
+  SHL BX , 1
+  JNC NEXT_BIT
+  INC AX
+ NEXT_BIT:
+  DEC CX
+  JNZ AGAIN
+
+  POP CX
+  POP BX
+  RET
+COUNT_1_BITS ENDP
+
+COUNT_WORDS PROC
+    PUSH SI
+    MOV SI, AX        
+    MOV BX , 0     
+    MOV DL, 0         
+
+NEXT_CHAR:
+    MOV AL, [SI]
+    CMP AL, '$'       
+    JE STRING_FINISH
+
+    CMP AL, ' '       
+    JE SPACE_FOUND
+
+    CMP DL, 1        
+    JE CONTINUE       
+    INC BX            
+    MOV DL, 1         
+    JMP CONTINUE
+
+SPACE_FOUND:
+    MOV DL, 0         
+
+CONTINUE:
+    INC SI
+    JMP NEXT_CHAR
+
+STRING_FINISH:
+    MOV AX, BX        
+    POP SI
+    RET
+COUNT_WORDS ENDP
+END MAIN
+    
